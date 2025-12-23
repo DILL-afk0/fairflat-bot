@@ -230,9 +230,7 @@ def start(update: Update, context):
         return
 
     user_name = USERS[telegram]
-    # дальше твой код меню...
 
-    
     # Главное меню
     keyboard = [
         [InlineKeyboardButton("🎯 Кто что должен?", callback_data='menu_who')],
@@ -243,14 +241,14 @@ def start(update: Update, context):
         [InlineKeyboardButton("🚪 Отметить отъезд/возвращение", callback_data='menu_home')],
         [InlineKeyboardButton("📋 Правила системы", callback_data='rules')]
     ]
-    
+
     # Добавляем админку если админ
     if is_admin(telegram):
         keyboard.insert(6, [InlineKeyboardButton("⚙ Админка", callback_data='admin_panel')])
-    
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-     update.message.reply_text(
+
+    update.message.reply_text(
         f"🏠 *Главное меню*\n\n"
         f"Привет, {user_name}! Выберите действие:",
         parse_mode='Markdown',
