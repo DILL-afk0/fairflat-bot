@@ -210,14 +210,14 @@ def update_balance(telegram, points):
 
 # ==================== ОСНОВНЫЕ КОМАНДЫ ====================
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(update: Update, context):
     """Главное меню"""
     user = update.effective_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     # Проверяем регистрацию
     if telegram not in USERS:
-        await update.message.reply_text(
+         update.message.reply_text(
             "👋 *Привет!*\n\n"
             "Я бот для справедливого распределения дел в квартире.\n"
             "Участники:\n"
@@ -248,17 +248,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(
+     update.message.reply_text(
         f"🏠 *Главное меню*\n\n"
         f"Привет, {user_name}! Выберите действие:",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
-async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def show_main_menu(update: Update, context: .DEFAULT_TYPE):
     """Показать главное меню"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
@@ -287,21 +287,21 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     new_text = f"🏠 *Главное меню*\n\nПривет, {user_name}! Выберите действие:"
     
     if query.message.text != new_text:
-        await query.edit_message_text(
+         query.edit_message_text(
             new_text,
             parse_mode='Markdown',
             reply_markup=reply_markup
         )
     else:
-        await query.edit_message_reply_markup(reply_markup=reply_markup)
+         query.edit_message_reply_markup(reply_markup=reply_markup)
 
 # Продолжи дальше!
 # ==================== МЕНЮ "КТО ЧТО ДОЛЖЕН" ====================
 
-async def menu_who(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def menu_who(update: Update, context: .DEFAULT_TYPE):
     """Меню выбора задачи"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     keyboard = []
     tasks = list(TASKS.keys())
@@ -318,28 +318,28 @@ async def menu_who(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "🎯 *Выберите задачу, чтобы узнать кто должен делать:*",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
-async def process_who(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def process_who(update: Update, context: .DEFAULT_TYPE):
     """Обработка выбора задачи"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     task = query.data.replace('who_', '')
     
     if task not in TASKS:
-        await query.edit_message_text("❌ Задача не найдена")
+         query.edit_message_text("❌ Задача не найдена")
         return
     
     # Определяем следующего
     next_tg, next_name, last_user = get_next_for_task(task)
     
     if not next_name:
-        await query.edit_message_text("❌ Все в отъезде!")
+         query.edit_message_text("❌ Все в отъезде!")
         return
     
     # Информация о последнем выполнении этой задачи именно этим человеком
@@ -385,14 +385,14 @@ async def process_who(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+     query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
 
 # ==================== МЕНЮ "Я СДЕЛАЛ ЗАДАЧУ" ====================
 
-async def menu_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def menu_did(update: Update, context: .DEFAULT_TYPE):
     """Меню выполненных задач"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     keyboard = []
     tasks = list(TASKS.keys())
@@ -409,24 +409,24 @@ async def menu_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "✅ *Какую задачу вы выполнили?*\n\n"
         "Выберите из списка:",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
-async def process_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def process_did(update: Update, context: .DEFAULT_TYPE):
     """Обработка выполнения задачи"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     task = query.data.replace('did_', '')
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-        await query.edit_message_text("❌ Вы не участник системы!")
+         query.edit_message_text("❌ Вы не участник системы!")
         return
     
     user_name = USERS[telegram]
@@ -441,7 +441,7 @@ async def process_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
         
     if not task_id:
-        await query.edit_message_text("❌ Ошибка при сохранении задачи")
+         query.edit_message_text("❌ Ошибка при сохранении задачи")
         return
     
     # Находим кого можно попросить подтвердить (кроме себя)
@@ -451,7 +451,7 @@ async def process_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     if not possible_confirmers:
-        await query.edit_message_text(
+         query.edit_message_text(
             f"✅ *Задача записана!*\n\n"
             f"👤 {user_name} → *{task}*\n"
             f"⭐ {TASKS[task]['points']} баллов\n\n"
@@ -475,7 +475,7 @@ async def process_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"🔄 *Требуется подтверждение*\n\n"
         f"👤 *{user_name}* выполнил(а): *{task}*\n"
         f"⭐ Баллов: {TASKS[task]['points']}\n"
@@ -487,21 +487,21 @@ async def process_did(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== ПОДТВЕРЖДЕНИЕ / ОТМЕНА ЗАДАЧ ====================
 
-async def process_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def process_confirmation(update: Update, context: .DEFAULT_TYPE):
     """Обработка подтверждения задачи или штрафа"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     
     if not data.startswith('confirm_'):
-        await query.edit_message_text("❌ Неверный формат подтверждения")
+         query.edit_message_text("❌ Неверный формат подтверждения")
         return
     
     parts = data.replace('confirm_', '').split('_')
     
     if len(parts) < 2:
-        await query.edit_message_text("❌ Ошибка в данных")
+         query.edit_message_text("❌ Ошибка в данных")
         return
     
     task_id = int(parts[0])
@@ -512,14 +512,14 @@ async def process_confirmation(update: Update, context: ContextTypes.DEFAULT_TYP
     confirmer_tg = f"@{confirmer.username}" if confirmer.username else confirmer.first_name
     
     if confirmer_tg not in USERS:
-        await query.edit_message_text("❌ Вы не участник системы!")
+         query.edit_message_text("❌ Вы не участник системы!")
         return
     
     confirmer_name = USERS[confirmer_tg]
     
     # Проверяем, что подтверждает правильный человек
     if confirmer_name != expected_confirmer:
-        await query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
+         query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
         return
     
     # Получаем информацию о задаче
@@ -530,19 +530,19 @@ async def process_confirmation(update: Update, context: ContextTypes.DEFAULT_TYP
     )
     
     if not result:
-        await query.edit_message_text("❌ Задача не найдена!")
+         query.edit_message_text("❌ Задача не найдена!")
         return
     
     task, doer_tg, doer_name, points, is_confirmed, is_penalty = result[0]
     
     # Проверяем, не подтверждена ли уже
     if is_confirmed:
-        await query.edit_message_text("✅ Эта запись уже подтверждена!")
+         query.edit_message_text("✅ Эта запись уже подтверждена!")
         return
     
     # Проверяем, что не подтверждает свою задачу/штраф
     if doer_name == confirmer_name:
-        await query.edit_message_text("❌ Нельзя подтверждать свою запись!")
+         query.edit_message_text("❌ Нельзя подтверждать свою запись!")
         return
     
     # Подтверждаем задачу (confirmed_at = сейчас, date не трогаем)
@@ -571,12 +571,12 @@ async def process_confirmation(update: Update, context: ContextTypes.DEFAULT_TYP
         f"🕒 {datetime.now().strftime('%H:%M %d.%m.%Y')}"
     )
     
-    await query.edit_message_text(response, parse_mode='Markdown')
+     query.edit_message_text(response, parse_mode='Markdown')
 
-async def cancel_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def cancel_task(update: Update, context: .DEFAULT_TYPE):
     """Отмена неподтверждённой задачи"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     task_id = int(data.replace('cancel_', ''))
@@ -586,23 +586,23 @@ async def cancel_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "SELECT is_confirmed FROM tasks_done WHERE id = ?", (task_id,)
     )
     if not result:
-        await query.edit_message_text("❌ Задача не найдена")
+         query.edit_message_text("❌ Задача не найдена")
         return
     
     is_confirmed = result[0][0]
     if is_confirmed:
-        await query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
+         query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
         return
     
     execute_query("DELETE FROM tasks_done WHERE id = ?", (task_id,))
-    await query.edit_message_text("❌ Задача отменена")
+     query.edit_message_text("❌ Задача отменена")
 
 # ==================== ГОТОВКА И ПОСУДА ====================
 
-async def menu_food(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def menu_food(update: Update, context: .DEFAULT_TYPE):
     """Меню готовки/посуды"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     keyboard = [
         [InlineKeyboardButton("🍳 Я приготовил для всех", callback_data='cooked_all')],
@@ -624,18 +624,18 @@ async def menu_food(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Выберите действие:"
     )
     
-    await query.edit_message_text(rules, parse_mode='Markdown', reply_markup=reply_markup)
+     query.edit_message_text(rules, parse_mode='Markdown', reply_markup=reply_markup)
 
-async def cooked_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def cooked_all(update: Update, context: .DEFAULT_TYPE):
     """Запись готовки для всех"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-        await query.edit_message_text("❌ Вы не участник!")
+         query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -649,7 +649,7 @@ async def cooked_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
         
     if not cook_id:
-        await query.edit_message_text("❌ Ошибка при сохранении")
+         query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -658,7 +658,7 @@ async def cooked_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     if not possible_confirmers:
-        await query.edit_message_text(
+         query.edit_message_text(
             f"✅ *Готовка записана!*\n\n"
             f"👤 {user_name} приготовил(а) для всех\n"
             f"⭐ 3 балла\n\n"
@@ -685,7 +685,7 @@ async def cooked_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"✅ *Готовка записана!*\n\n"
         f"👤 {user_name} приготовил(а) для всех\n"
         f"⭐ 3 балла (нужно подтверждение)\n\n"
@@ -694,10 +694,10 @@ async def cooked_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def dishes_after_cooking(update: Update, context: .DEFAULT_TYPE):
     """Помыл посуду после конкретной готовки"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     cook_id = int(data.replace('dishes_', ''))
@@ -706,7 +706,7 @@ async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYP
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-        await query.edit_message_text("❌ Вы не участник!")
+         query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -720,7 +720,7 @@ async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYP
     )
         
     if not task_id:
-        await query.edit_message_text("❌ Ошибка при сохранении")
+         query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -729,7 +729,7 @@ async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYP
     )
     
     if not possible_confirmers:
-        await query.edit_message_text(
+         query.edit_message_text(
             f"✅ *Записано!*\n\n"
             f"👤 {user_name} помыл(а) посуду\n"
             f"⭐ 2 балла\n\n"
@@ -749,7 +749,7 @@ async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYP
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"🔄 *Подтвердите мытьё посуды*\n\n"
         f"👤 {user_name} помыл(а) посуду после готовки\n"
         f"⭐ 2 балла\n\n"
@@ -758,16 +758,16 @@ async def dishes_after_cooking(update: Update, context: ContextTypes.DEFAULT_TYP
         reply_markup=reply_markup
     )
 
-async def washed_dishes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def washed_dishes(update: Update, context: .DEFAULT_TYPE):
     """Общая функция для мытья посуды"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-        await query.edit_message_text("❌ Вы не участник!")
+         query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -781,7 +781,7 @@ async def washed_dishes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
         
     if not task_id:
-        await query.edit_message_text("❌ Ошибка при сохранении")
+         query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -790,7 +790,7 @@ async def washed_dishes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     if not possible_confirmers:
-        await query.edit_message_text(
+         query.edit_message_text(
             f"✅ *Записано!*\n\n"
             f"👤 {user_name} помыл(а) посуду\n"
             f"⭐ 2 балла\n\n"
@@ -810,7 +810,7 @@ async def washed_dishes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"🔄 *Подтвердите мытьё посуды*\n\n"
         f"👤 {user_name} помыл(а) посуду\n"
         f"⭐ 2 балла\n\n"
@@ -821,10 +821,10 @@ async def washed_dishes(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== ШТРАФЫ ====================
 
-async def menu_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def menu_penalty(update: Update, context: .DEFAULT_TYPE):
     """Меню штрафов"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     keyboard = [
         [InlineKeyboardButton("💧 Не убрал за собой", callback_data='penalty_mess')],
@@ -835,7 +835,7 @@ async def menu_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "⚠️ *ШТРАФНАЯ СИСТЕМА*\n\n"
         "• Не убрал за собой → -1 балл\n"
         "• Не сделал назначенное → -2 балла\n"
@@ -848,10 +848,10 @@ async def menu_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-async def penalty_type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def penalty_type_selected(update: Update, context: .DEFAULT_TYPE):
     """Выбор типа штрафа"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     penalty_type = query.data
     
@@ -862,7 +862,7 @@ async def penalty_type_selected(update: Update, context: ContextTypes.DEFAULT_TY
     }
     
     if penalty_type not in penalties:
-        await query.edit_message_text("❌ Ошибка")
+         query.edit_message_text("❌ Ошибка")
         return
     
     penalty_name, points = penalties[penalty_type]
@@ -891,7 +891,7 @@ async def penalty_type_selected(update: Update, context: ContextTypes.DEFAULT_TY
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"⚠️ *Кто нарушил?*\n\n"
         f"Нарушение: {penalty_name}\n"
         f"Штраф: {points} баллов\n\n"
@@ -901,16 +901,16 @@ async def penalty_type_selected(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup=reply_markup
     )
 
-async def create_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def create_penalty(update: Update, context: .DEFAULT_TYPE):
     """Создание штрафа"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     user_tg = data.replace('penalty_user_', '')
     
     if 'penalty_info' not in context.user_data:
-        await query.edit_message_text("❌ Информация о штрафе потеряна")
+         query.edit_message_text("❌ Информация о штрафе потеряна")
         return
     
     penalty_info = context.user_data['penalty_info']
@@ -931,7 +931,7 @@ async def create_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
         
     if not penalty_id:
-        await query.edit_message_text("❌ Ошибка при создании штрафа")
+         query.edit_message_text("❌ Ошибка при создании штрафа")
         return
     
     # Находим кто может подтвердить (кроме того кто назначил и того кому назначили)
@@ -942,7 +942,7 @@ async def create_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     if not possible_confirmers:
-        await query.edit_message_text(
+         query.edit_message_text(
             f"⚠️ *Штраф записан!*\n\n"
             f"👤 {user_name}\n"
             f"📝 {penalty_name}\n"
@@ -964,7 +964,7 @@ async def create_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"⚠️ *Штраф создан!*\n\n"
         f"👤 {user_name}\n"
         f"📝 {penalty_name}\n"
@@ -978,10 +978,10 @@ async def create_penalty(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== СТАТИСТИКА ====================
 
-async def show_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def show_stats(update: Update, context: .DEFAULT_TYPE):
     """Показать статистику"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     current_time = datetime.now().strftime('%H:%M:%S')
     
@@ -1042,29 +1042,29 @@ async def show_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         stats_text,
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
-async def refresh_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def refresh_stats(update: Update, context: .DEFAULT_TYPE):
     """Обновить статистику"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
-    await show_stats(update, context)
+     show_stats(update, context)
 
-async def show_user_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def show_user_stats(update: Update, context: .DEFAULT_TYPE):
     """Подробная статистика по конкретному пользователю"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     user_tg = data.replace('user_stats_', '')
     
     if user_tg not in USERS:
-        await query.edit_message_text("❌ Пользователь не найден")
+         query.edit_message_text("❌ Пользователь не найден")
         return
     
     user_name = USERS[user_tg]
@@ -1103,7 +1103,7 @@ async def show_user_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         stats_text,
         parse_mode='Markdown',
         reply_markup=reply_markup
@@ -1111,16 +1111,16 @@ async def show_user_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== ОТЪЕЗД/ВОЗВРАЩЕНИЕ ====================
 
-async def menu_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def menu_home(update: Update, context: .DEFAULT_TYPE):
     """Меню смены статуса дома"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-        await query.edit_message_text("❌ Вы не участник!")
+         query.edit_message_text("❌ Вы не участник!")
         return
     
     result = execute_query(
@@ -1128,7 +1128,7 @@ async def menu_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     if not result:
-        await query.edit_message_text("❌ Ошибка базы данных")
+         query.edit_message_text("❌ Ошибка базы данных")
         return
     
     is_home = result[0][0]
@@ -1146,7 +1146,7 @@ async def menu_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     status = "дома 🏠" if is_home else "в отъезде ✈️"
     
-    await query.edit_message_text(
+     query.edit_message_text(
         f"👤 *{user_name}*\n"
         f"Сейчас вы: {status}\n\n"
         f"Нажмите кнопку чтобы изменить статус:",
@@ -1154,10 +1154,10 @@ async def menu_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-async def toggle_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def toggle_home(update: Update, context: .DEFAULT_TYPE):
     """Смена статуса дома"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     action = query.data
     user = query.from_user
@@ -1172,14 +1172,14 @@ async def toggle_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     user_name = USERS[telegram]
-    await query.edit_message_text(f"✅ {user_name} {status_text}!")
+     query.edit_message_text(f"✅ {user_name} {status_text}!")
 
 # ==================== ПРАВИЛА ====================
 
-async def show_rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def show_rules(update: Update, context: .DEFAULT_TYPE):
     """Показать полные правила"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     rules_text = (
         "📋 *ПОЛНЫЕ ПРАВИЛА СИСТЕМЫ*\n\n"
@@ -1240,20 +1240,20 @@ async def show_rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("🏠 Назад", callback_data='main_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(rules_text, parse_mode='Markdown', reply_markup=reply_markup)
+     query.edit_message_text(rules_text, parse_mode='Markdown', reply_markup=reply_markup)
 
 # ==================== АДМИНКА ====================
 
-async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_panel(update: Update, context: .DEFAULT_TYPE):
     """Админ-меню"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-        await query.edit_message_text("❌ У вас нет прав администратора")
+         query.edit_message_text("❌ У вас нет прав администратора")
         return
     
     keyboard = [
@@ -1263,7 +1263,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "⚙ *АДМИНКА*\n\n"
         "• Здесь можно полностью очистить статистику.\n"
         "• Балансы будут обнулены.\n"
@@ -1273,16 +1273,16 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-async def admin_reset_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_reset_confirm(update: Update, context: .DEFAULT_TYPE):
     """Подтверждение сброса статистики"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-        await query.edit_message_text("❌ У вас нет прав администратора")
+         query.edit_message_text("❌ У вас нет прав администратора")
         return
     
     keyboard = [
@@ -1292,7 +1292,7 @@ async def admin_reset_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "⚠️ *ВНИМАНИЕ! ПОЛНЫЙ СБРОС СТАТИСТИКИ*\n\n"
         "Будет выполнено:\n"
         "• Удаление всех записей о задачах и штрафах\n"
@@ -1304,16 +1304,16 @@ async def admin_reset_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE
         reply_markup=reply_markup
     )
 
-async def admin_reset_yes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_reset_yes(update: Update, context: .DEFAULT_TYPE):
     """Выполнить сброс статистики"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-        await query.edit_message_text("❌ У вас нет прав администратора")
+         query.edit_message_text("❌ У вас нет прав администратора")
         return
     
     # Удаляем все задачи/штрафы
@@ -1323,108 +1323,108 @@ async def admin_reset_yes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Сбрасываем очередь
     execute_query("UPDATE queue SET last_user = 'никто', last_date = NULL")
     
-    await query.edit_message_text(
+     query.edit_message_text(
         "✅ Вся статистика сброшена.\n"
         "• Все балансы обнулены.\n"
         "• Очередь задач очищена.\n\n"
         "Можно начинать с чистого листа."
     )
 
-async def admin_reset_no(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_reset_no(update: Update, context: .DEFAULT_TYPE):
     """Отмена сброса статистики"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
-    await admin_panel(update, context)
+     admin_panel(update, context)
 
 # ==================== ОБРАБОТЧИК КНОПОК ====================
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button_handler(update: Update, context: .DEFAULT_TYPE):
     """Главный обработчик кнопок"""
     query = update.callback_query
-    await query.answer()
+     query.answer()
     
     data = query.data
     
     try:
         if data == 'main_menu':
-            await show_main_menu(update, context)
+             show_main_menu(update, context)
             
         elif data == 'menu_who':
-            await menu_who(update, context)
+             menu_who(update, context)
             
         elif data.startswith('who_'):
-            await process_who(update, context)
+             process_who(update, context)
             
         elif data == 'menu_did':
-            await menu_did(update, context)
+             menu_did(update, context)
             
         elif data.startswith('did_'):
-            await process_did(update, context)
+             process_did(update, context)
             
         elif data.startswith('confirm_'):
-            await process_confirmation(update, context)
+             process_confirmation(update, context)
             
         elif data.startswith('cancel_'):
-            await cancel_task(update, context)
+             cancel_task(update, context)
             
         elif data == 'menu_food':
-            await menu_food(update, context)
+             menu_food(update, context)
             
         elif data == 'cooked_all':
-            await cooked_all(update, context)
+             cooked_all(update, context)
             
         elif data.startswith('dishes_'):
-            await dishes_after_cooking(update, context)
+             dishes_after_cooking(update, context)
             
         elif data == 'washed_dishes':
-            await washed_dishes(update, context)
+             washed_dishes(update, context)
             
         elif data == 'menu_penalty':
-            await menu_penalty(update, context)
+             menu_penalty(update, context)
             
         elif data in ['penalty_mess', 'penalty_task', 'penalty_trash']:
-            await penalty_type_selected(update, context)
+             penalty_type_selected(update, context)
             
         elif data.startswith('penalty_user_'):
-            await create_penalty(update, context)
+             create_penalty(update, context)
             
         elif data == 'stats':
-            await show_stats(update, context)
+             show_stats(update, context)
             
         elif data == 'stats_refresh':
-            await refresh_stats(update, context)
+             refresh_stats(update, context)
             
         elif data.startswith('user_stats_'):
-            await show_user_stats(update, context)
+             show_user_stats(update, context)
             
         elif data == 'menu_home':
-            await menu_home(update, context)
+             menu_home(update, context)
             
         elif data in ['leave', 'return']:
-            await toggle_home(update, context)
+             toggle_home(update, context)
             
         elif data == 'rules':
-            await show_rules(update, context)
+             show_rules(update, context)
             
         elif data == 'admin_panel':
-            await admin_panel(update, context)
+             admin_panel(update, context)
             
         elif data == 'admin_reset_confirm':
-            await admin_reset_confirm(update, context)
+             admin_reset_confirm(update, context)
             
         elif data == 'admin_reset_yes':
-            await admin_reset_yes(update, context)
+             admin_reset_yes(update, context)
             
         elif data == 'admin_reset_no':
-            await admin_reset_no(update, context)
+             admin_reset_no(update, context)
             
         else:
-            await query.edit_message_text("❌ Неизвестная команда")
+             query.edit_message_text("❌ Неизвестная команда")
             
     except Exception as e:
         print(f"❌ Ошибка в обработчике кнопок: {e}")
-        await query.edit_message_text("❌ Произошла ошибка, попробуйте ещё раз")
+         query.edit_message_text("❌ Произошла ошибка, попробуйте ещё раз")
 
 # ==================== ЗАПУСК БОТА ====================
 
