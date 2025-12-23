@@ -214,23 +214,23 @@ def start(update: Update, context):
     user = update.effective_user
     telegram = f"@{user.username}" if user.username else user.first_name
 
-    # Проверяем регистрацию
+    # Не участник
     if telegram not in USERS:
-        update.message.reply_text(
-            "👋 *Привет!*\n\n"
-            "Я бот для справедливого распределения дел в квартире.\n"
-            "Участники:\n"
-            "• Матрос (@DILLC7)\n"
-            "• Борода (@djumshut2000)\n"
-            "• Даник (@naattive)\n\n"
-            "Если ты один из них, используй кнопки ниже.",
-            parse_mode='Markdown'
-        )
+        if update.message:
+            update.message.reply_text(
+                "👋 *Привет!*\n\n"
+                "Я бот для справедливого распределения дел в квартире.\n"
+                "Участники:\n"
+                "• Матрос (@DILLC7)\n"
+                "• Борода (@djumshut2000)\n"
+                "• Даник (@naattive)\n\n"
+                "Если ты один из них, используй кнопки ниже.",
+                parse_mode='Markdown'
+            )
         return
 
     user_name = USERS[telegram]
 
-    # Главное меню
     keyboard = [
         [InlineKeyboardButton("🎯 Кто что должен?", callback_data='menu_who')],
         [InlineKeyboardButton("✅ Я сделал задачу", callback_data='menu_did')],
@@ -238,20 +238,23 @@ def start(update: Update, context):
         [InlineKeyboardButton("⚠️ Штраф/нарушение", callback_data='menu_penalty')],
         [InlineKeyboardButton("📊 Статистика", callback_data='stats')],
         [InlineKeyboardButton("🚪 Отметить отъезд/возвращение", callback_data='menu_home')],
-        [InlineKeyboardButton("📋 Правила системы", callback_data='rules')]
+        [InlineKeyboardButton("📋 Правила системы", callback_data='rules')],
     ]
 
-    # Добавляем админку если админ
     if is_admin(telegram):
         keyboard.insert(6, [InlineKeyboardButton("⚙ Админка", callback_data='admin_panel')])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
-        f"🏠 *Главное меню*\n\n"
-        f"Привет, {user_name}! Выберите действие:",
+
+    # Отправка главного меню без reply_to_message
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=f"🏠 *Главное меню*\n\nПривет, {user_name}! Выберите действие:",
         parse_mode='Markdown',
-        reply_markup=reply_markup
+        reply_markup=reply_markup,
     )
+
 
 def help_command(update: Update, context):
     """Команда помощи"""
