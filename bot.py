@@ -1429,18 +1429,13 @@ def button_handler(update: Update, context):
 # ==================== ЗАПУСК БОТА ====================
 
 def main():
-    # Инициализируем базу
     init_db()
 
-    # Создаем Updater для v13.15 (синхронный)
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
-    # Команды
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help_command))
-
-    # Все нажатия на inline‑кнопки обрабатывает один handler
     dp.add_handler(CallbackQueryHandler(button_handler))
 
     logging.info("Бот запущен, ждём сообщения...")
