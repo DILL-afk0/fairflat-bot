@@ -1429,16 +1429,39 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ==================== ЗАПУСК БОТА ====================
 
 def main():
-    """Запуск бота"""
     init_db()
-    
-    app = Application.builder().token(TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    
-    print("🤖 Бот запущен. Ожидаем сообщения...")
-    app.run_polling()
+
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help_command))
+
+    dp.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
+    dp.add_handler(CallbackQueryHandler(show_tasks_menu, pattern="^tasks_menu$"))
+    dp.add_handler(CallbackQueryHandler(process_task_choice, pattern="^task_"))
+    dp.add_handler(CallbackQueryHandler(process_did, pattern="^did_"))
+    dp.add_handler(CallbackQueryHandler(process_confirmation, pattern="^confirm_"))
+    dp.add_handler(CallbackQueryHandler(cancel_task, pattern="^cancel_"))
+
+    dp.add_handler(CallbackQueryHandler(menu_food, pattern="^menu_food$"))
+    dp.add_handler(CallbackQueryHandler(cooked_all, pattern="^cooked_all$"))
+    dp.add_handler(CallbackQueryHandler(dishes_after_cooking, pattern="^dishes_"))
+    dp.add_handler(CallbackQueryHandler(washed_dishes, pattern="^washed_dishes$"))
+
+    dp.add_handler(CallbackQueryHandler(menu_penalty, pattern="^menu_penalty$"))
+    dp.add_handler(CallbackQueryHandler(penalty_mess, pattern="^penalty_mess$"))
+    dp.add_handler(CallbackQueryHandler(penalty_task, pattern="^penalty_task$"))
+    dp.add_handler(CallbackQueryHandler(penalty_trash, pattern="^penalty_trash$"))
+    dp.add_handler(CallbackQueryHandler(process_penalty_reason, pattern="^penalty_reason_"))
+    dp.add_handler(CallbackQueryHandler(confirm_penalty, pattern="^penalty_confirm_"))
+    dp.add_handler(CallbackQueryHandler(cancel_penalty, pattern="^penalty_cancel_"))
+
+    logging.info("Бот запущен, ждём сообщения...")
+    updater.start_polling()
+    updater.idle()
+
 
 if __name__ == "__main__":
     main()
+
