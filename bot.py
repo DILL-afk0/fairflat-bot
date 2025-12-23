@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
-
 # ==================== НАСТРОЙКИ ====================
 TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
+
 DATABASE = "fairflat_fix.db"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -209,7 +209,6 @@ def update_balance(telegram, points):
     return new_balance
 
 # ==================== ОСНОВНЫЕ КОМАНДЫ ====================
-
 def start(update: Update, context):
     """Главное меню"""
     user = update.effective_user
@@ -247,7 +246,6 @@ def start(update: Update, context):
         keyboard.insert(6, [InlineKeyboardButton("⚙ Админка", callback_data='admin_panel')])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-
     update.message.reply_text(
         f"🏠 *Главное меню*\n\n"
         f"Привет, {user_name}! Выберите действие:",
@@ -255,10 +253,14 @@ def start(update: Update, context):
         reply_markup=reply_markup
     )
 
+def help_command(update: Update, context):
+    """Команда помощи"""
+    start(update, context)
+
 def show_main_menu(update: Update, context):
     """Показать главное меню"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
@@ -287,21 +289,19 @@ def show_main_menu(update: Update, context):
     new_text = f"🏠 *Главное меню*\n\nПривет, {user_name}! Выберите действие:"
     
     if query.message.text != new_text:
-         query.edit_message_text(
+        query.edit_message_text(
             new_text,
             parse_mode='Markdown',
             reply_markup=reply_markup
         )
     else:
-         query.edit_message_reply_markup(reply_markup=reply_markup)
+        query.edit_message_reply_markup(reply_markup=reply_markup)
 
-# Продолжи дальше!
 # ==================== МЕНЮ "КТО ЧТО ДОЛЖЕН" ====================
-
 def menu_who(update: Update, context):
     """Меню выбора задачи"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     keyboard = []
     tasks = list(TASKS.keys())
@@ -318,7 +318,7 @@ def menu_who(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         "🎯 *Выберите задачу, чтобы узнать кто должен делать:*",
         parse_mode='Markdown',
         reply_markup=reply_markup
@@ -327,19 +327,19 @@ def menu_who(update: Update, context):
 def process_who(update: Update, context):
     """Обработка выбора задачи"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     task = query.data.replace('who_', '')
     
     if task not in TASKS:
-         query.edit_message_text("❌ Задача не найдена")
+        query.edit_message_text("❌ Задача не найдена")
         return
     
     # Определяем следующего
     next_tg, next_name, last_user = get_next_for_task(task)
     
     if not next_name:
-         query.edit_message_text("❌ Все в отъезде!")
+        query.edit_message_text("❌ Все в отъезде!")
         return
     
     # Информация о последнем выполнении этой задачи именно этим человеком
@@ -385,14 +385,13 @@ def process_who(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+    query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
 
 # ==================== МЕНЮ "Я СДЕЛАЛ ЗАДАЧУ" ====================
-
 def menu_did(update: Update, context):
     """Меню выполненных задач"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     keyboard = []
     tasks = list(TASKS.keys())
@@ -409,7 +408,7 @@ def menu_did(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         "✅ *Какую задачу вы выполнили?*\n\n"
         "Выберите из списка:",
         parse_mode='Markdown',
@@ -419,14 +418,14 @@ def menu_did(update: Update, context):
 def process_did(update: Update, context):
     """Обработка выполнения задачи"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     task = query.data.replace('did_', '')
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-         query.edit_message_text("❌ Вы не участник системы!")
+        query.edit_message_text("❌ Вы не участник системы!")
         return
     
     user_name = USERS[telegram]
@@ -441,7 +440,7 @@ def process_did(update: Update, context):
     )
         
     if not task_id:
-         query.edit_message_text("❌ Ошибка при сохранении задачи")
+        query.edit_message_text("❌ Ошибка при сохранении задачи")
         return
     
     # Находим кого можно попросить подтвердить (кроме себя)
@@ -451,7 +450,7 @@ def process_did(update: Update, context):
     )
     
     if not possible_confirmers:
-         query.edit_message_text(
+        query.edit_message_text(
             f"✅ *Задача записана!*\n\n"
             f"👤 {user_name} → *{task}*\n"
             f"⭐ {TASKS[task]['points']} баллов\n\n"
@@ -475,7 +474,7 @@ def process_did(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"🔄 *Требуется подтверждение*\n\n"
         f"👤 *{user_name}* выполнил(а): *{task}*\n"
         f"⭐ Баллов: {TASKS[task]['points']}\n"
@@ -486,22 +485,21 @@ def process_did(update: Update, context):
     )
 
 # ==================== ПОДТВЕРЖДЕНИЕ / ОТМЕНА ЗАДАЧ ====================
-
 def process_confirmation(update: Update, context):
     """Обработка подтверждения задачи или штрафа"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     
     if not data.startswith('confirm_'):
-         query.edit_message_text("❌ Неверный формат подтверждения")
+        query.edit_message_text("❌ Неверный формат подтверждения")
         return
     
     parts = data.replace('confirm_', '').split('_')
     
     if len(parts) < 2:
-         query.edit_message_text("❌ Ошибка в данных")
+        query.edit_message_text("❌ Ошибка в данных")
         return
     
     task_id = int(parts[0])
@@ -512,14 +510,14 @@ def process_confirmation(update: Update, context):
     confirmer_tg = f"@{confirmer.username}" if confirmer.username else confirmer.first_name
     
     if confirmer_tg not in USERS:
-         query.edit_message_text("❌ Вы не участник системы!")
+        query.edit_message_text("❌ Вы не участник системы!")
         return
     
     confirmer_name = USERS[confirmer_tg]
     
     # Проверяем, что подтверждает правильный человек
     if confirmer_name != expected_confirmer:
-         query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
+        query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
         return
     
     # Получаем информацию о задаче
@@ -530,19 +528,19 @@ def process_confirmation(update: Update, context):
     )
     
     if not result:
-         query.edit_message_text("❌ Задача не найдена!")
+        query.edit_message_text("❌ Задача не найдена!")
         return
     
     task, doer_tg, doer_name, points, is_confirmed, is_penalty = result[0]
     
     # Проверяем, не подтверждена ли уже
     if is_confirmed:
-         query.edit_message_text("✅ Эта запись уже подтверждена!")
+        query.edit_message_text("✅ Эта запись уже подтверждена!")
         return
     
     # Проверяем, что не подтверждает свою задачу/штраф
     if doer_name == confirmer_name:
-         query.edit_message_text("❌ Нельзя подтверждать свою запись!")
+        query.edit_message_text("❌ Нельзя подтверждать свою запись!")
         return
     
     # Подтверждаем задачу (confirmed_at = сейчас, date не трогаем)
@@ -571,12 +569,12 @@ def process_confirmation(update: Update, context):
         f"🕒 {datetime.now().strftime('%H:%M %d.%m.%Y')}"
     )
     
-     query.edit_message_text(response, parse_mode='Markdown')
+    query.edit_message_text(response, parse_mode='Markdown')
 
 def cancel_task(update: Update, context):
     """Отмена неподтверждённой задачи"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     task_id = int(data.replace('cancel_', ''))
@@ -586,23 +584,22 @@ def cancel_task(update: Update, context):
         "SELECT is_confirmed FROM tasks_done WHERE id = ?", (task_id,)
     )
     if not result:
-         query.edit_message_text("❌ Задача не найдена")
+        query.edit_message_text("❌ Задача не найдена")
         return
     
     is_confirmed = result[0][0]
     if is_confirmed:
-         query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
+        query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
         return
     
     execute_query("DELETE FROM tasks_done WHERE id = ?", (task_id,))
-     query.edit_message_text("❌ Задача отменена")
+    query.edit_message_text("❌ Задача отменена")
 
 # ==================== ГОТОВКА И ПОСУДА ====================
-
 def menu_food(update: Update, context):
     """Меню готовки/посуды"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     keyboard = [
         [InlineKeyboardButton("🍳 Я приготовил для всех", callback_data='cooked_all')],
@@ -624,18 +621,18 @@ def menu_food(update: Update, context):
         "Выберите действие:"
     )
     
-     query.edit_message_text(rules, parse_mode='Markdown', reply_markup=reply_markup)
+    query.edit_message_text(rules, parse_mode='Markdown', reply_markup=reply_markup)
 
 def cooked_all(update: Update, context):
     """Запись готовки для всех"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-         query.edit_message_text("❌ Вы не участник!")
+        query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -649,7 +646,7 @@ def cooked_all(update: Update, context):
     )
         
     if not cook_id:
-         query.edit_message_text("❌ Ошибка при сохранении")
+        query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -658,7 +655,7 @@ def cooked_all(update: Update, context):
     )
     
     if not possible_confirmers:
-         query.edit_message_text(
+        query.edit_message_text(
             f"✅ *Готовка записана!*\n\n"
             f"👤 {user_name} приготовил(а) для всех\n"
             f"⭐ 3 балла\n\n"
@@ -685,7 +682,7 @@ def cooked_all(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"✅ *Готовка записана!*\n\n"
         f"👤 {user_name} приготовил(а) для всех\n"
         f"⭐ 3 балла (нужно подтверждение)\n\n"
@@ -697,7 +694,7 @@ def cooked_all(update: Update, context):
 def dishes_after_cooking(update: Update, context):
     """Помыл посуду после конкретной готовки"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     cook_id = int(data.replace('dishes_', ''))
@@ -706,7 +703,7 @@ def dishes_after_cooking(update: Update, context):
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-         query.edit_message_text("❌ Вы не участник!")
+        query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -720,7 +717,7 @@ def dishes_after_cooking(update: Update, context):
     )
         
     if not task_id:
-         query.edit_message_text("❌ Ошибка при сохранении")
+        query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -729,7 +726,7 @@ def dishes_after_cooking(update: Update, context):
     )
     
     if not possible_confirmers:
-         query.edit_message_text(
+        query.edit_message_text(
             f"✅ *Записано!*\n\n"
             f"👤 {user_name} помыл(а) посуду\n"
             f"⭐ 2 балла\n\n"
@@ -749,7 +746,7 @@ def dishes_after_cooking(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"🔄 *Подтвердите мытьё посуды*\n\n"
         f"👤 {user_name} помыл(а) посуду после готовки\n"
         f"⭐ 2 балла\n\n"
@@ -761,13 +758,13 @@ def dishes_after_cooking(update: Update, context):
 def washed_dishes(update: Update, context):
     """Общая функция для мытья посуды"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-         query.edit_message_text("❌ Вы не участник!")
+        query.edit_message_text("❌ Вы не участник!")
         return
     
     user_name = USERS[telegram]
@@ -781,7 +778,7 @@ def washed_dishes(update: Update, context):
     )
         
     if not task_id:
-         query.edit_message_text("❌ Ошибка при сохранении")
+        query.edit_message_text("❌ Ошибка при сохранении")
         return
     
     possible_confirmers = execute_query(
@@ -790,7 +787,7 @@ def washed_dishes(update: Update, context):
     )
     
     if not possible_confirmers:
-         query.edit_message_text(
+        query.edit_message_text(
             f"✅ *Записано!*\n\n"
             f"👤 {user_name} помыл(а) посуду\n"
             f"⭐ 2 балла\n\n"
@@ -810,7 +807,7 @@ def washed_dishes(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"🔄 *Подтвердите мытьё посуды*\n\n"
         f"👤 {user_name} помыл(а) посуду\n"
         f"⭐ 2 балла\n\n"
@@ -820,11 +817,10 @@ def washed_dishes(update: Update, context):
     )
 
 # ==================== ШТРАФЫ ====================
-
 def menu_penalty(update: Update, context):
     """Меню штрафов"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     keyboard = [
         [InlineKeyboardButton("💧 Не убрал за собой", callback_data='penalty_mess')],
@@ -835,7 +831,7 @@ def menu_penalty(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         "⚠️ *ШТРАФНАЯ СИСТЕМА*\n\n"
         "• Не убрал за собой → -1 балл\n"
         "• Не сделал назначенное → -2 балла\n"
@@ -851,7 +847,7 @@ def menu_penalty(update: Update, context):
 def penalty_type_selected(update: Update, context):
     """Выбор типа штрафа"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     penalty_type = query.data
     
@@ -862,7 +858,7 @@ def penalty_type_selected(update: Update, context):
     }
     
     if penalty_type not in penalties:
-         query.edit_message_text("❌ Ошибка")
+        query.edit_message_text("❌ Ошибка")
         return
     
     penalty_name, points = penalties[penalty_type]
@@ -891,7 +887,7 @@ def penalty_type_selected(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"⚠️ *Кто нарушил?*\n\n"
         f"Нарушение: {penalty_name}\n"
         f"Штраф: {points} баллов\n\n"
@@ -904,13 +900,13 @@ def penalty_type_selected(update: Update, context):
 def create_penalty(update: Update, context):
     """Создание штрафа"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     user_tg = data.replace('penalty_user_', '')
     
     if 'penalty_info' not in context.user_data:
-         query.edit_message_text("❌ Информация о штрафе потеряна")
+        query.edit_message_text("❌ Информация о штрафе потеряна")
         return
     
     penalty_info = context.user_data['penalty_info']
@@ -931,7 +927,7 @@ def create_penalty(update: Update, context):
     )
         
     if not penalty_id:
-         query.edit_message_text("❌ Ошибка при создании штрафа")
+        query.edit_message_text("❌ Ошибка при создании штрафа")
         return
     
     # Находим кто может подтвердить (кроме того кто назначил и того кому назначили)
@@ -942,7 +938,7 @@ def create_penalty(update: Update, context):
     )
     
     if not possible_confirmers:
-         query.edit_message_text(
+        query.edit_message_text(
             f"⚠️ *Штраф записан!*\n\n"
             f"👤 {user_name}\n"
             f"📝 {penalty_name}\n"
@@ -964,7 +960,7 @@ def create_penalty(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"⚠️ *Штраф создан!*\n\n"
         f"👤 {user_name}\n"
         f"📝 {penalty_name}\n"
@@ -977,11 +973,10 @@ def create_penalty(update: Update, context):
     )
 
 # ==================== СТАТИСТИКА ====================
-
 def show_stats(update: Update, context):
     """Показать статистику"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     current_time = datetime.now().strftime('%H:%M:%S')
     
@@ -1034,15 +1029,13 @@ def show_stats(update: Update, context):
             InlineKeyboardButton("👤 Матрос", callback_data='user_stats_@DILLC7'),
             InlineKeyboardButton("👤 Борода", callback_data='user_stats_@djumshut2000')
         ],
-        [
-            InlineKeyboardButton("👤 Даник", callback_data='user_stats_@naattive')
-        ],
+        [InlineKeyboardButton("👤 Даник", callback_data='user_stats_@naattive')],
         [InlineKeyboardButton("🏠 Назад", callback_data='main_menu')]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         stats_text,
         parse_mode='Markdown',
         reply_markup=reply_markup
@@ -1051,20 +1044,20 @@ def show_stats(update: Update, context):
 def refresh_stats(update: Update, context):
     """Обновить статистику"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
-     show_stats(update, context)
+    show_stats(update, context)
 
 def show_user_stats(update: Update, context):
     """Подробная статистика по конкретному пользователю"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     user_tg = data.replace('user_stats_', '')
     
     if user_tg not in USERS:
-         query.edit_message_text("❌ Пользователь не найден")
+        query.edit_message_text("❌ Пользователь не найден")
         return
     
     user_name = USERS[user_tg]
@@ -1103,24 +1096,23 @@ def show_user_stats(update: Update, context):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
+    query.edit_message_text(
         stats_text,
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
 # ==================== ОТЪЕЗД/ВОЗВРАЩЕНИЕ ====================
-
 def menu_home(update: Update, context):
     """Меню смены статуса дома"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if telegram not in USERS:
-         query.edit_message_text("❌ Вы не участник!")
+        query.edit_message_text("❌ Вы не участник!")
         return
     
     result = execute_query(
@@ -1128,7 +1120,7 @@ def menu_home(update: Update, context):
     )
     
     if not result:
-         query.edit_message_text("❌ Ошибка базы данных")
+        query.edit_message_text("❌ Ошибка базы данных")
         return
     
     is_home = result[0][0]
@@ -1146,7 +1138,7 @@ def menu_home(update: Update, context):
     
     status = "дома 🏠" if is_home else "в отъезде ✈️"
     
-     query.edit_message_text(
+    query.edit_message_text(
         f"👤 *{user_name}*\n"
         f"Сейчас вы: {status}\n\n"
         f"Нажмите кнопку чтобы изменить статус:",
@@ -1157,7 +1149,7 @@ def menu_home(update: Update, context):
 def toggle_home(update: Update, context):
     """Смена статуса дома"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     action = query.data
     user = query.from_user
@@ -1172,14 +1164,13 @@ def toggle_home(update: Update, context):
     )
     
     user_name = USERS[telegram]
-     query.edit_message_text(f"✅ {user_name} {status_text}!")
+    query.edit_message_text(f"✅ {user_name} {status_text}!")
 
 # ==================== ПРАВИЛА ====================
-
 def show_rules(update: Update, context):
     """Показать полные правила"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     rules_text = (
         "📋 *ПОЛНЫЕ ПРАВИЛА СИСТЕМЫ*\n\n"
@@ -1232,216 +1223,187 @@ def show_rules(update: Update, context):
     rules_text += "• Уехавшие не получают новые задачи\n"
     rules_text += "• После возвращения продолжаете с того же места\n\n"
     
-    rules_text += "📊 *Статистика:*\n"
-    rules_text += "• Кнопка '🔄 Обновить' показывает актуальные данные\n"
-    rules_text += "• Баллы не сбрасываются сами по себе, только через админку\n"
-    rules_text += "• Есть подробные отчёты по каждому человеку\n"
-    
-    keyboard = [[InlineKeyboardButton("🏠 Назад", callback_data='main_menu')]]
+    keyboard = [[InlineKeyboardButton("🏠 Главное меню", callback_data='main_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(rules_text, parse_mode='Markdown', reply_markup=reply_markup)
+    query.edit_message_text(rules_text, parse_mode='Markdown', reply_markup=reply_markup)
 
 # ==================== АДМИНКА ====================
-
 def admin_panel(update: Update, context):
-    """Админ-меню"""
+    """Админ панель"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-         query.edit_message_text("❌ У вас нет прав администратора")
+        query.edit_message_text("❌ Нет доступа!")
         return
     
     keyboard = [
-        [InlineKeyboardButton("♻ Полный сброс статистики", callback_data='admin_reset_confirm')],
-        [InlineKeyboardButton("🏠 Назад", callback_data='main_menu')]
+        [InlineKeyboardButton("🗑️ СБРОСИТЬ ВСЕХ БАЛАНСЫ", callback_data='admin_reset_confirm')],
+        [InlineKeyboardButton("🏠 Главное меню", callback_data='main_menu')]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
-        "⚙ *АДМИНКА*\n\n"
-        "• Здесь можно полностью очистить статистику.\n"
-        "• Балансы будут обнулены.\n"
-        "• Очередь по задачам будет сброшена.\n\n"
-        "Будьте осторожны.",
+    query.edit_message_text(
+        "⚙️ *АДМИН ПАНЕЛЬ*\n\n"
+        "🔴 СБРОС ВСЕХ БАЛАНСОВ\n"
+        "   • Все балансы = 0\n"
+        "   • История задач сохраняется\n"
+        "   • Очередь задач сбрасывается\n\n"
+        "*ВНИМАНИЕ: Это необратимо!*",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
 def admin_reset_confirm(update: Update, context):
-    """Подтверждение сброса статистики"""
+    """Подтверждение сброса"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-         query.edit_message_text("❌ У вас нет прав администратора")
+        query.edit_message_text("❌ Нет доступа!")
         return
     
     keyboard = [
-        [InlineKeyboardButton("✅ Да, сбросить всё", callback_data='admin_reset_yes')],
-        [InlineKeyboardButton("❌ Нет, отмена", callback_data='admin_reset_no')]
+        [InlineKeyboardButton("🔴 ДА, СБРОСИТЬ ВСЁ", callback_data='admin_reset_yes')],
+        [InlineKeyboardButton("❌ Отмена", callback_data='admin_reset_no')]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-     query.edit_message_text(
-        "⚠️ *ВНИМАНИЕ! ПОЛНЫЙ СБРОС СТАТИСТИКИ*\n\n"
-        "Будет выполнено:\n"
-        "• Удаление всех записей о задачах и штрафах\n"
-        "• Обнуление балансов\n"
-        "• Сброс очереди по задачам\n\n"
-        "Действие необратимо.\n\n"
-        "Ты точно хочешь продолжить?",
+    query.edit_message_text(
+        "⚠️ *ПОДТВЕРЖДЕНИЕ СБРОСА*\n\n"
+        "🗑️ Сбросит:\n"
+        "• Все балансы = 0\n"
+        "• Очередь задач = пустая\n\n"
+        "*Это НЕ удалит историю задач!*\n\n"
+        "*Ты уверен?*",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
 
 def admin_reset_yes(update: Update, context):
-    """Выполнить сброс статистики"""
+    """Выполнить сброс"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     user = query.from_user
     telegram = f"@{user.username}" if user.username else user.first_name
     
     if not is_admin(telegram):
-         query.edit_message_text("❌ У вас нет прав администратора")
+        query.edit_message_text("❌ Нет доступа!")
         return
     
-    # Удаляем все задачи/штрафы
-    execute_query("DELETE FROM tasks_done")
-    # Обнуляем балансы
-    execute_query("UPDATE users SET balance = 0")
-    # Сбрасываем очередь
-    execute_query("UPDATE queue SET last_user = 'никто', last_date = NULL")
+    # Сбрасываем балансы
+    for tg in USERS.keys():
+        execute_query("UPDATE users SET balance = 0 WHERE telegram = ?", (tg,))
     
-     query.edit_message_text(
-        "✅ Вся статистика сброшена.\n"
-        "• Все балансы обнулены.\n"
-        "• Очередь задач очищена.\n\n"
-        "Можно начинать с чистого листа."
+    # Сбрасываем очередь
+    execute_query("UPDATE queue SET last_user = '', last_date = NULL")
+    
+    query.edit_message_text(
+        "✅ *СБРОС ВЫПОЛНЕН!*\n\n"
+        "• Все балансы = 0\n"
+        "• Очередь задач очищена\n"
+        "• История задач сохранена\n\n"
+        "Бот готов к работе! 🎉",
+        parse_mode='Markdown'
     )
 
 def admin_reset_no(update: Update, context):
-    """Отмена сброса статистики"""
+    """Отмена сброса"""
     query = update.callback_query
-     query.answer()
-    
-     admin_panel(update, context)
+    query.answer()
+    admin_panel(update, context)
 
-# ==================== ОБРАБОТЧИК КНОПОК ====================
-
+# ==================== ГЛАВНЫЙ ОБРАБОТЧИК КНОПОК ====================
 def button_handler(update: Update, context):
-    """Главный обработчик кнопок"""
+    """Общий обработчик всех кнопок"""
     query = update.callback_query
-     query.answer()
+    query.answer()
     
     data = query.data
     
     try:
         if data == 'main_menu':
-             show_main_menu(update, context)
-            
+            show_main_menu(update, context)
         elif data == 'menu_who':
-             menu_who(update, context)
-            
+            menu_who(update, context)
         elif data.startswith('who_'):
-             process_who(update, context)
-            
+            process_who(update, context)
         elif data == 'menu_did':
-             menu_did(update, context)
-            
+            menu_did(update, context)
         elif data.startswith('did_'):
-             process_did(update, context)
-            
+            process_did(update, context)
         elif data.startswith('confirm_'):
-             process_confirmation(update, context)
-            
+            process_confirmation(update, context)
         elif data.startswith('cancel_'):
-             cancel_task(update, context)
-            
+            cancel_task(update, context)
         elif data == 'menu_food':
-             menu_food(update, context)
-            
+            menu_food(update, context)
         elif data == 'cooked_all':
-             cooked_all(update, context)
-            
+            cooked_all(update, context)
         elif data.startswith('dishes_'):
-             dishes_after_cooking(update, context)
-            
+            dishes_after_cooking(update, context)
         elif data == 'washed_dishes':
-             washed_dishes(update, context)
-            
+            washed_dishes(update, context)
         elif data == 'menu_penalty':
-             menu_penalty(update, context)
-            
+            menu_penalty(update, context)
         elif data in ['penalty_mess', 'penalty_task', 'penalty_trash']:
-             penalty_type_selected(update, context)
-            
+            penalty_type_selected(update, context)
         elif data.startswith('penalty_user_'):
-             create_penalty(update, context)
-            
+            create_penalty(update, context)
         elif data == 'stats':
-             show_stats(update, context)
-            
+            show_stats(update, context)
         elif data == 'stats_refresh':
-             refresh_stats(update, context)
-            
+            refresh_stats(update, context)
         elif data.startswith('user_stats_'):
-             show_user_stats(update, context)
-            
+            show_user_stats(update, context)
         elif data == 'menu_home':
-             menu_home(update, context)
-            
+            menu_home(update, context)
         elif data in ['leave', 'return']:
-             toggle_home(update, context)
-            
+            toggle_home(update, context)
         elif data == 'rules':
-             show_rules(update, context)
-            
+            show_rules(update, context)
         elif data == 'admin_panel':
-             admin_panel(update, context)
-            
+            admin_panel(update, context)
         elif data == 'admin_reset_confirm':
-             admin_reset_confirm(update, context)
-            
+            admin_reset_confirm(update, context)
         elif data == 'admin_reset_yes':
-             admin_reset_yes(update, context)
-            
+            admin_reset_yes(update, context)
         elif data == 'admin_reset_no':
-             admin_reset_no(update, context)
-            
+            admin_reset_no(update, context)
         else:
-             query.edit_message_text("❌ Неизвестная команда")
-            
+            query.edit_message_text("❌ Неизвестная команда!")
     except Exception as e:
-        print(f"❌ Ошибка в обработчике кнопок: {e}")
-         query.edit_message_text("❌ Произошла ошибка, попробуйте ещё раз")
+        print(f"❌ Ошибка обработчика: {e}")
+        query.edit_message_text("❌ Произошла ошибка! Попробуйте позже.")
 
 # ==================== ЗАПУСК БОТА ====================
-
 def main():
+    """Запуск бота"""
     init_db()
-
+    
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_command))
+    
+    # Команды
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('help', help_command))
+    
+    # Обработчик кнопок
     dp.add_handler(CallbackQueryHandler(button_handler))
-
-    logging.info("Бот запущен, ждём сообщения...")
+    
+    logging.info("🚀 Бот запущен!")
     updater.start_polling()
     updater.idle()
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
