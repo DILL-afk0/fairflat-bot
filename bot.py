@@ -255,7 +255,7 @@ def start(update: Update, context):
         reply_markup=reply_markup
     )
 
-def show_main_menu(update: Update, context: .DEFAULT_TYPE):
+def show_main_menu(update: Update, context):
     """Показать главное меню"""
     query = update.callback_query
      query.answer()
@@ -298,7 +298,7 @@ def show_main_menu(update: Update, context: .DEFAULT_TYPE):
 # Продолжи дальше!
 # ==================== МЕНЮ "КТО ЧТО ДОЛЖЕН" ====================
 
-def menu_who(update: Update, context: .DEFAULT_TYPE):
+def menu_who(update: Update, context):
     """Меню выбора задачи"""
     query = update.callback_query
      query.answer()
@@ -324,7 +324,7 @@ def menu_who(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def process_who(update: Update, context: .DEFAULT_TYPE):
+def process_who(update: Update, context):
     """Обработка выбора задачи"""
     query = update.callback_query
      query.answer()
@@ -389,7 +389,7 @@ def process_who(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== МЕНЮ "Я СДЕЛАЛ ЗАДАЧУ" ====================
 
-def menu_did(update: Update, context: .DEFAULT_TYPE):
+def menu_did(update: Update, context):
     """Меню выполненных задач"""
     query = update.callback_query
      query.answer()
@@ -416,7 +416,7 @@ def menu_did(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def process_did(update: Update, context: .DEFAULT_TYPE):
+def process_did(update: Update, context):
     """Обработка выполнения задачи"""
     query = update.callback_query
      query.answer()
@@ -487,7 +487,7 @@ def process_did(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ПОДТВЕРЖДЕНИЕ / ОТМЕНА ЗАДАЧ ====================
 
-def process_confirmation(update: Update, context: .DEFAULT_TYPE):
+def process_confirmation(update: Update, context):
     """Обработка подтверждения задачи или штрафа"""
     query = update.callback_query
      query.answer()
@@ -573,7 +573,7 @@ def process_confirmation(update: Update, context: .DEFAULT_TYPE):
     
      query.edit_message_text(response, parse_mode='Markdown')
 
-def cancel_task(update: Update, context: .DEFAULT_TYPE):
+def cancel_task(update: Update, context):
     """Отмена неподтверждённой задачи"""
     query = update.callback_query
      query.answer()
@@ -599,7 +599,7 @@ def cancel_task(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ГОТОВКА И ПОСУДА ====================
 
-def menu_food(update: Update, context: .DEFAULT_TYPE):
+def menu_food(update: Update, context):
     """Меню готовки/посуды"""
     query = update.callback_query
      query.answer()
@@ -626,7 +626,7 @@ def menu_food(update: Update, context: .DEFAULT_TYPE):
     
      query.edit_message_text(rules, parse_mode='Markdown', reply_markup=reply_markup)
 
-def cooked_all(update: Update, context: .DEFAULT_TYPE):
+def cooked_all(update: Update, context):
     """Запись готовки для всех"""
     query = update.callback_query
      query.answer()
@@ -694,7 +694,7 @@ def cooked_all(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def dishes_after_cooking(update: Update, context: .DEFAULT_TYPE):
+def dishes_after_cooking(update: Update, context):
     """Помыл посуду после конкретной готовки"""
     query = update.callback_query
      query.answer()
@@ -758,7 +758,7 @@ def dishes_after_cooking(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def washed_dishes(update: Update, context: .DEFAULT_TYPE):
+def washed_dishes(update: Update, context):
     """Общая функция для мытья посуды"""
     query = update.callback_query
      query.answer()
@@ -821,7 +821,7 @@ def washed_dishes(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ШТРАФЫ ====================
 
-def menu_penalty(update: Update, context: .DEFAULT_TYPE):
+def menu_penalty(update: Update, context):
     """Меню штрафов"""
     query = update.callback_query
      query.answer()
@@ -848,7 +848,7 @@ def menu_penalty(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def penalty_type_selected(update: Update, context: .DEFAULT_TYPE):
+def penalty_type_selected(update: Update, context):
     """Выбор типа штрафа"""
     query = update.callback_query
      query.answer()
@@ -901,7 +901,7 @@ def penalty_type_selected(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def create_penalty(update: Update, context: .DEFAULT_TYPE):
+def create_penalty(update: Update, context):
     """Создание штрафа"""
     query = update.callback_query
      query.answer()
@@ -978,7 +978,7 @@ def create_penalty(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== СТАТИСТИКА ====================
 
-def show_stats(update: Update, context: .DEFAULT_TYPE):
+def show_stats(update: Update, context):
     """Показать статистику"""
     query = update.callback_query
      query.answer()
@@ -1048,14 +1048,14 @@ def show_stats(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def refresh_stats(update: Update, context: .DEFAULT_TYPE):
+def refresh_stats(update: Update, context):
     """Обновить статистику"""
     query = update.callback_query
      query.answer()
     
      show_stats(update, context)
 
-def show_user_stats(update: Update, context: .DEFAULT_TYPE):
+def show_user_stats(update: Update, context):
     """Подробная статистика по конкретному пользователю"""
     query = update.callback_query
      query.answer()
@@ -1111,7 +1111,7 @@ def show_user_stats(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ОТЪЕЗД/ВОЗВРАЩЕНИЕ ====================
 
-def menu_home(update: Update, context: .DEFAULT_TYPE):
+def menu_home(update: Update, context):
     """Меню смены статуса дома"""
     query = update.callback_query
      query.answer()
@@ -1154,7 +1154,7 @@ def menu_home(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def toggle_home(update: Update, context: .DEFAULT_TYPE):
+def toggle_home(update: Update, context):
     """Смена статуса дома"""
     query = update.callback_query
      query.answer()
@@ -1176,7 +1176,7 @@ def toggle_home(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ПРАВИЛА ====================
 
-def show_rules(update: Update, context: .DEFAULT_TYPE):
+def show_rules(update: Update, context):
     """Показать полные правила"""
     query = update.callback_query
      query.answer()
@@ -1244,7 +1244,7 @@ def show_rules(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== АДМИНКА ====================
 
-def admin_panel(update: Update, context: .DEFAULT_TYPE):
+def admin_panel(update: Update, context):
     """Админ-меню"""
     query = update.callback_query
      query.answer()
@@ -1273,7 +1273,7 @@ def admin_panel(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def admin_reset_confirm(update: Update, context: .DEFAULT_TYPE):
+def admin_reset_confirm(update: Update, context):
     """Подтверждение сброса статистики"""
     query = update.callback_query
      query.answer()
@@ -1304,7 +1304,7 @@ def admin_reset_confirm(update: Update, context: .DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-def admin_reset_yes(update: Update, context: .DEFAULT_TYPE):
+def admin_reset_yes(update: Update, context):
     """Выполнить сброс статистики"""
     query = update.callback_query
      query.answer()
@@ -1330,7 +1330,7 @@ def admin_reset_yes(update: Update, context: .DEFAULT_TYPE):
         "Можно начинать с чистого листа."
     )
 
-def admin_reset_no(update: Update, context: .DEFAULT_TYPE):
+def admin_reset_no(update: Update, context):
     """Отмена сброса статистики"""
     query = update.callback_query
      query.answer()
@@ -1339,7 +1339,7 @@ def admin_reset_no(update: Update, context: .DEFAULT_TYPE):
 
 # ==================== ОБРАБОТЧИК КНОПОК ====================
 
-def button_handler(update: Update, context: .DEFAULT_TYPE):
+def button_handler(update: Update, context):
     """Главный обработчик кнопок"""
     query = update.callback_query
      query.answer()
@@ -1429,33 +1429,19 @@ def button_handler(update: Update, context: .DEFAULT_TYPE):
 # ==================== ЗАПУСК БОТА ====================
 
 def main():
+    # Инициализируем базу
     init_db()
 
+    # Создаем Updater для v13.15 (синхронный)
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    # Команды
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help_command))
 
-    dp.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
-    dp.add_handler(CallbackQueryHandler(show_tasks_menu, pattern="^tasks_menu$"))
-    dp.add_handler(CallbackQueryHandler(process_task_choice, pattern="^task_"))
-    dp.add_handler(CallbackQueryHandler(process_did, pattern="^did_"))
-    dp.add_handler(CallbackQueryHandler(process_confirmation, pattern="^confirm_"))
-    dp.add_handler(CallbackQueryHandler(cancel_task, pattern="^cancel_"))
-
-    dp.add_handler(CallbackQueryHandler(menu_food, pattern="^menu_food$"))
-    dp.add_handler(CallbackQueryHandler(cooked_all, pattern="^cooked_all$"))
-    dp.add_handler(CallbackQueryHandler(dishes_after_cooking, pattern="^dishes_"))
-    dp.add_handler(CallbackQueryHandler(washed_dishes, pattern="^washed_dishes$"))
-
-    dp.add_handler(CallbackQueryHandler(menu_penalty, pattern="^menu_penalty$"))
-    dp.add_handler(CallbackQueryHandler(penalty_mess, pattern="^penalty_mess$"))
-    dp.add_handler(CallbackQueryHandler(penalty_task, pattern="^penalty_task$"))
-    dp.add_handler(CallbackQueryHandler(penalty_trash, pattern="^penalty_trash$"))
-    dp.add_handler(CallbackQueryHandler(process_penalty_reason, pattern="^penalty_reason_"))
-    dp.add_handler(CallbackQueryHandler(confirm_penalty, pattern="^penalty_confirm_"))
-    dp.add_handler(CallbackQueryHandler(cancel_penalty, pattern="^penalty_cancel_"))
+    # Все нажатия на inline‑кнопки обрабатывает один handler
+    dp.add_handler(CallbackQueryHandler(button_handler))
 
     logging.info("Бот запущен, ждём сообщения...")
     updater.start_polling()
@@ -1464,4 +1450,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
