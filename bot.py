@@ -5,6 +5,19 @@ import os
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def run_http_server():
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server.serve_forever()
+
 
 # ==================== НАСТРОЙКИ ====================
 TOKEN = os.getenv("BOT_TOKEN")
@@ -1396,17 +1409,22 @@ def main():
     
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
-    
+
     # Команды
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('help', help_command))
-    
+
     # Обработчик кнопок
     dp.add_handler(CallbackQueryHandler(button_handler))
-    
+
     logging.info("🚀 Бот запущен!")
     updater.start_polling()
     updater.idle()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+    # HTTP-заглушка для Render
+    threading.Thread(target=run_http_server, daemon=True).start()
+    # Запуск бота
     main()
+
