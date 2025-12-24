@@ -476,8 +476,14 @@ def process_did(update: Update, context):
         )
         return
     
-    # Создаём кнопки подтверждения
+     # Создаём кнопки подтверждения
     keyboard = []
+    possible_confirmers = execute_query(
+        "SELECT telegram, name FROM users WHERE telegram != ? AND is_home = 1",
+        (telegram,)
+    )
+    
+    # Добавляем обычных подтверждающих
     for conf_tg, conf_name in possible_confirmers:
         keyboard.append([
             InlineKeyboardButton(
@@ -485,6 +491,16 @@ def process_did(update: Update, context):
                 callback_data=f'confirm_{task_id}_{conf_name}'
             )
         ])
+    
+    # ДОБАВЛЯЕМ КНОПКУ ДЛЯ АДМИНА @DILLC7
+    if is_admin(telegram):  # Если сам админ выполнил задачу
+        keyboard.insert(0, [  # Вставляем первой
+            InlineKeyboardButton(
+                "✅ 👑 Я (@DILLC7) подтверждаю сам",
+                callback_data=f'confirm_{task_id}_@DILLC7'
+            )
+        ])
+
     
     keyboard.append([InlineKeyboardButton("❌ Отменить", callback_data=f'cancel_{task_id}')])
     
@@ -950,12 +966,32 @@ def create_penalty(update: Update, context):
         query.edit_message_text("❌ Ошибка при создании штрафа")
         return
     
-    # Находим кто может подтвердить (кроме того кто назначил и того кому назначили)
+    # Находим кто может подтвердить
     possible_confirmers = execute_query(
         '''SELECT telegram, name FROM users 
            WHERE telegram != ? AND telegram != ? AND is_home = 1''',
         (creator_tg, user_tg)
     )
+    
+    keyboard = []
+    # Добавляем обычных подтверждающих
+    for conf_tg, conf_name in possible_confirmers:
+        keyboard.append([
+            InlineKeyboardButton(
+                f"✅ {conf_name} подтверждает штраф",
+                callback_data=f'confirm_{penalty_id}_{conf_name}'
+            )
+        ])
+    
+    # ДОБАВЛЯЕМ КНОПКУ ДЛЯ АДМИНА @DILLC7 (если он назначил штраф)
+    if is_admin(creator_tg):
+        keyboard.insert(0, [
+            InlineKeyboardButton(
+                "✅ 👑 Я (@DILLC7) подтверждаю сам",
+                callback_data=f'confirm_{penalty_id}_@DILLC7'
+            )
+        ])
+
     
     if not possible_confirmers:
         query.edit_message_text(
