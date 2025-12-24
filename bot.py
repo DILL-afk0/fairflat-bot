@@ -554,10 +554,14 @@ def process_confirmation(update: Update, context):
         query.edit_message_text("✅ Эта запись уже подтверждена!")
         return
     
-    # Проверяем, что не подтверждает свою задачу/штраф
+    # Проверяем, что не подтверждает свою запись (кроме главного админа)
+    # Матрос (@DILLC7) может подтверждать и свои задачи, и свои штрафы
     if doer_name == confirmer_name:
-        query.edit_message_text("❌ Нельзя подтверждать свою запись!")
-        return
+        confirmer_tg = f"@{confirmer.username}" if confirmer.username else confirmer.first_name
+        if confirmer_tg not in ADMINS:
+            query.edit_message_text("❌ Нельзя подтверждать свою запись!")
+            return
+
     
     # Подтверждаем задачу (confirmed_at = сейчас, date не трогаем)
     confirmed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
