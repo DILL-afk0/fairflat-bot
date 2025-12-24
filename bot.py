@@ -537,20 +537,20 @@ def process_confirmation(update: Update, context):
     task_id = int(parts[0])
     expected_confirmer = parts[1]
     
-    # Кто подтверждает
     confirmer = query.from_user
-    confirmer_tg = f"@{confirmer.username}" if confirmer.username else confirmer.first_name
-    
-    if confirmer_tg not in USERS:
-        query.edit_message_text("❌ Вы не участник системы!")
+    confirmertg = f"@{confirmer.username}" if confirmer.username else None
+    if confirmertg == "@DILLC7":  
+        confirmername = "Матрос"
+    elif confirmertg and confirmertg.lstrip('@') in USERS:
+        confirmername = USERS[confirmertg.lstrip('@')]
+    else:
+        query.edit_message_text("❌ Ты не в списке пользователей!")
         return
     
-    confirmer_name = USERS[confirmer_tg]
-    
-    # Проверяем, что подтверждает правильный человек
-    if confirmer_name != expected_confirmer:
-        query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
+    if confirmername != expectedconfirmer:
+        query.edit_message_text(f"❌ Подтверждать должен {expectedconfirmer}!")
         return
+
     
     # Получаем информацию о задаче
     result = execute_query(
