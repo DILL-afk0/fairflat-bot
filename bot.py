@@ -444,6 +444,82 @@ def process_did(update: Update, context):
         reply_markup=reply_markup
     )
 
+def process_confirmation(update: Update, context):
+    """Подтверждение выполнения задачи"""
+    query = update.callback_query
+    query.answer()
+    
+    data = query.data
+    
+    if not data.startswith('confirm_'):
+        query.edit_message_text("❌ Неверный формат")
+        return
+    
+    parts = data.replace('confirm_', '').split('_', 1)
+    if len(parts) < 2:
+        query.edit_message_text("❌ Ошибка данных")
+        return
+    
+    try:
+        task_id = int(parts[0])
+    except:
+        query.edit_message_text("❌ Неверный ID задачи")
+        return
+    
+    expected_confirmer = parts[1]
+    
+    confirmer = query.from_user
+    confirmertg = f"@{confirmer.username}" if confirmer.username else None
+    
+    if confirmertg == "@DILLC7":
+        confirmer_name = "матрос"
+    elif confirmertg and confirmertg.lstrip('@') in USERS:
+        confirmer_name = USERS[confirmertg.lstrip('@')]
+    else:
+        query.edit_message_text("❌ Ты не участник системы!")
+        return
+    
+    if confirmertg not in ADMINS and confirmer_name != expected_confirmer:
+        query.edit_message_text(f"❌ Эту задачу должен подтвердить {expected_confirmer}!")
+        return
+
+    result = execute_query(
+        "SELECT task, user_telegram, user_name, points, is_confirmed, is_penalty FROM tasks_done WHERE id = ?",
+        (task_id,)
+    )
+    
+    if not result:
+        query.edit_message_text(f"❌ Задача ID {task_id} не найдена!")
+        return
+    
+    task, doer_tg, doer_name, points, is_confirmed, is_penalty = result[0]
+    
+    if is_confirmed:
+        query.edit_message_text("✅ Эта задача уже подтверждена!")
+        return
+    
+    confirmed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    execute_query(
+        "UPDATE tasks_done SET confirmed_by = ?, is_confirmed = 1, confirmed_at = ? WHERE id = ?",
+        (confirmer_name, confirmed_at, task_id)
+    )
+    
+    new_balance = update_balance(doer_tg, points)
+    
+    if not is_penalty and task in TASKS:
+        update_queue(task, doer_name)
+    
+    query.edit_message_text(
+        f"✅ *ПОДТВЕРЖДЕНО!*\n\n"
+        f"👤 {doer_name}\n"
+        f"📝 *{task}*\n"
+        f"👍 Подтвердил: {confirmer_name}\n"
+        f"⭐ Баллов: {points:+d}\n"
+        f"💰 Баланс: {new_balance}\n"
+        f"🕒 {datetime.now().strftime('%H:%M %d.%m.%Y')}",
+        parse_mode='Markdown'
+    )
+
 # ==================== ПОДТВЕРЖДЕНИЕ / ОТМЕНА ЗАДАЧ ====================
 def process_confirmation(update: Update, context):
     """Подтверждение выполнения задачи"""
