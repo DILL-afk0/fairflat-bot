@@ -511,21 +511,28 @@ def process_confirmation(update: Update, context):
     query.answer()
     
     data = query.data
+    print(f"DEBUG: callback_data = '{data}'")  # ← ОТЛАДКА
+    
     if not data.startswith('confirm_'):
         query.edit_message_text("❌ Неверный формат подтверждения")
         return
     
-    # ✅ ИСПРАВЛЕНО: правильный парсинг confirm_{id}_{name}
+    # ✅ ПРАВИЛЬНЫЙ парсинг confirm_{id}_{name}
     parts = data.replace('confirm_', '').split('_')
+    print(f"DEBUG: parts = {parts}")  # ← ОТЛАДКА
+    
     if len(parts) < 2:
         query.edit_message_text("❌ Ошибка в данных")
         return
     
-    task_id = int(parts[0])
+    try:
+        task_id = int(parts[0])
+    except ValueError:
+        query.edit_message_text("❌ Неверный ID задачи")
+        return
+        
     expected_confirmer = parts[1]
-    
-    # Остальной код без изменений...
-
+    print(f"DEBUG: task_id={task_id}, expected_confirmer='{expected_confirmer}'")  # ← ОТЛАДКА
     
     confirmer = query.from_user
     confirmertg = f"@{confirmer.username}" if confirmer.username else None
@@ -539,54 +546,49 @@ def process_confirmation(update: Update, context):
         query.edit_message_text("❌ Ты не в списке пользователей!")
         return
     
-    # ✅ АДМИН МОЖЕТ ПОДТВЕРДИТЬ ЛЮБУЮ КНОПКУ (убрали проверку expected_confirmer)
+    print(f"DEBUG: confirmertg='{confirmertg}', confirmer_name='{confirmer_name}'")  # ← ОТЛАДКА
+    
+    # ✅ АДМИН МОЖЕТ ПОДТВЕРДИТЬ ЛЮБУЮ КНОПКУ
     if confirmertg not in ADMINS and confirmer_name != expected_confirmer:
         query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
         return
 
-    # Получаем информацию о задаче (ИСПРАВЛЕННЫЕ названия колонок/таблицы)
+    # Получаем информацию о задаче
     result = execute_query(
-        '''SELECT task, usertelegram, username, points, isconfirmed, ispenalty 
-           FROM tasksdone WHERE id = ?''',
+        "SELECT task, usertelegram, username, points, isconfirmed, ispenalty FROM tasksdone WHERE id = ?",
         (task_id,)
     )
+    print(f"DEBUG: SQL result = {result}")  # ← ОТЛАДКА
     
     if not result:
-        query.edit_message_text("❌ Задача не найдена!")
+        query.edit_message_text(f"❌ Задача с ID {task_id} не найдена!")
         return
     
     task, doer_tg, doer_name, points, is_confirmed, is_penalty = result[0]
     
-    # Проверяем, не подтверждена ли уже
     if is_confirmed:
         query.edit_message_text("✅ Эта запись уже подтверждена!")
         return
     
-    # ✅ УБРАЛИ проверку "нельзя свою" - АДМИН МОЖЕТ ВСЁ!
-    
-    # Подтверждаем задачу (ИСПРАВЛЕННЫЕ названия колонок)
+    # Подтверждаем задачу
     confirmed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     execute_query(
-        '''UPDATE tasksdone 
-           SET confirmedby = ?, isconfirmed = 1, confirmedat = ?
-           WHERE id = ?''',
+        "UPDATE tasksdone SET confirmedby = ?, isconfirmed = 1, confirmedat = ? WHERE id = ?",
         (confirmer_name, confirmed_at, task_id)
     )
     
-    # Обновляем баланс с ограничением до MIN_BALANCE
     new_balance = update_balance(doer_tg, points)
     
-    # Если не штраф - обновляем очередь
     if not is_penalty and task in TASKS:
         update_queue(task, doer_name)
     
     response = (
         f"✅ *ПОДТВЕРЖДЕНО!*\n\n"
         f"👤 {doer_name}\n"
-        f"📝 Запись: *{task}*\n"
+        f"📝 *{task}*\n"
         f"👍 Подтвердил: {confirmer_name}\n"
-        f"⭐ Баллов: {points}\n"
-        f"📊 Новый баланс: {new_balance} (не ниже {MIN_BALANCE})\n"
+        f"⭐ {points:+d} баллов\n"
+        f"📊 Баланс: {new_balance}\n"
         f"🕒 {datetime.now().strftime('%H:%M %d.%m.%Y')}"
     )
     
@@ -598,19 +600,20 @@ def cancel_task(update: Update, context):
     query.answer()
     
     data = query.data
-    task_id = int(data.replace('cancel_', ''))
+    try:
+        task_id = int(data.replace('cancel_', ''))
+    except ValueError:
+        query.edit_message_text("❌ Неверный формат отмены")
+        return
     
-    # ИСПРАВЛЕННАЯ таблица/колонка
-    result = execute_query(
-        "SELECT isconfirmed FROM tasksdone WHERE id = ?", (task_id,)
-    )
+    result = execute_query("SELECT isconfirmed FROM tasksdone WHERE id = ?", (task_id,))
     if not result:
         query.edit_message_text("❌ Задача не найдена")
         return
     
     is_confirmed = result[0][0]
     if is_confirmed:
-        query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
+        query.edit_message_text("❌ Нельзя отменить подтверждённую запись")
         return
     
     execute_query("DELETE FROM tasksdone WHERE id = ?", (task_id,))
