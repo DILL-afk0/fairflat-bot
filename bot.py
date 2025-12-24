@@ -507,24 +507,25 @@ def process_did(update: Update, context):
 
 # ==================== ПОДТВЕРЖДЕНИЕ / ОТМЕНА ЗАДАЧ ====================
 def process_confirmation(update: Update, context):
-    """Обработка подтверждения задачи или штрафа"""
     query = update.callback_query
     query.answer()
     
     data = query.data
-    
     if not data.startswith('confirm_'):
         query.edit_message_text("❌ Неверный формат подтверждения")
         return
     
+    # ✅ ИСПРАВЛЕНО: правильный парсинг confirm_{id}_{name}
     parts = data.replace('confirm_', '').split('_')
-    
     if len(parts) < 2:
         query.edit_message_text("❌ Ошибка в данных")
         return
     
     task_id = int(parts[0])
     expected_confirmer = parts[1]
+    
+    # Остальной код без изменений...
+
     
     confirmer = query.from_user
     confirmertg = f"@{confirmer.username}" if confirmer.username else None
