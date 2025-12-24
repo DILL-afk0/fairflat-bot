@@ -459,31 +459,25 @@ def process_did(update: Update, context):
         query.edit_message_text("❌ Ошибка при сохранении задачи")
         return
     
-    # Находим кого можно попросить подтвердить (кроме себя)
-    possible_confirmers = execute_query(
-        "SELECT telegram, name FROM users WHERE telegram != ? AND is_home = 1",
-        (telegram,)
-    )
-    
-    if not possible_confirmers:
-        query.edit_message_text(
-            f"✅ *Задача записана!*\n\n"
-            f"👤 {user_name} → *{task}*\n"
-            f"⭐ {TASKS[task]['points']} баллов\n\n"
-            f"Сейчас нет других участников дома для подтверждения.\n"
-            f"Задача будет ждать подтверждения.",
-            parse_mode='Markdown'
-        )
-        return
-    
-     # Создаём кнопки подтверждения
+    # ✅ НОВАЯ ЛОГИКА: админ ВСЕГДА может подтвердить (даже свою задачу)
     keyboard = []
+    
+    # 1. КНОПКА АДМИНА (ВСЕГДА ДОСТУПНА, если админ дома)
+    if is_admin(telegram):
+        keyboard.append([
+            InlineKeyboardButton(
+                "✅ 👑 матрос подтверждает",
+                callback_data=f'confirm_{task_id}_матрос'
+            )
+        ])
+    
+    # 2. ОСТАЛЬНЫЕ ДОМАШНИЕ (кроме исполнителя)
     possible_confirmers = execute_query(
         "SELECT telegram, name FROM users WHERE telegram != ? AND is_home = 1",
         (telegram,)
     )
     
-    # Добавляем обычных подтверждающих
+    confirmer_count = 0
     for conf_tg, conf_name in possible_confirmers:
         keyboard.append([
             InlineKeyboardButton(
@@ -491,27 +485,22 @@ def process_did(update: Update, context):
                 callback_data=f'confirm_{task_id}_{conf_name}'
             )
         ])
+        confirmer_count += 1
     
-    # ДОБАВЛЯЕМ КНОПКУ ДЛЯ АДМИНА @DILLC7
-    if is_admin(telegram):  # Если сам админ выполнил задачу
-        keyboard.insert(0, [  # Вставляем первой
-            InlineKeyboardButton(
-                "✅ 👑 Я (@DILLC7) подтверждаю сам",
-                callback_data=f'confirm_{task_id}_@DILLC7'
-            )
-        ])
-
-    
+    # 3. КНОПКА ОТМЕНЫ
     keyboard.append([InlineKeyboardButton("❌ Отменить", callback_data=f'cancel_{task_id}')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Подсчёт доступных подтверждающих
+    total_confirmers = len(possible_confirmers) + (1 if is_admin(telegram) else 0)
     
     query.edit_message_text(
         f"🔄 *Требуется подтверждение*\n\n"
         f"👤 *{user_name}* выполнил(а): *{task}*\n"
         f"⭐ Баллов: {TASKS[task]['points']}\n"
         f"🕒 {datetime.now().strftime('%H:%M %d.%m.%Y')}\n\n"
-        f"Подтвердить может 1 другой участник:",
+        f"✅ Доступно для подтверждения: *{total_confirmers} чел.*",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
@@ -539,23 +528,25 @@ def process_confirmation(update: Update, context):
     
     confirmer = query.from_user
     confirmertg = f"@{confirmer.username}" if confirmer.username else None
+    
+    # Определяем имя подтверждающего
     if confirmertg == "@DILLC7":  
-        confirmername = "Матрос"
+        confirmer_name = "матрос"
     elif confirmertg and confirmertg.lstrip('@') in USERS:
-        confirmername = USERS[confirmertg.lstrip('@')]
+        confirmer_name = USERS[confirmertg.lstrip('@')]
     else:
         query.edit_message_text("❌ Ты не в списке пользователей!")
         return
     
-    if confirmername != expectedconfirmer:
-        query.edit_message_text(f"❌ Подтверждать должен {expectedconfirmer}!")
+    # ✅ АДМИН МОЖЕТ ПОДТВЕРДИТЬ ЛЮБУЮ КНОПКУ (убрали проверку expected_confirmer)
+    if not is_admin(confirmertg) and confirmer_name != expected_confirmer:
+        query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
         return
 
-    
-    # Получаем информацию о задаче
+    # Получаем информацию о задаче (ИСПРАВЛЕННЫЕ названия колонок/таблицы)
     result = execute_query(
-        '''SELECT task, user_telegram, user_name, points, is_confirmed, is_penalty 
-           FROM tasks_done WHERE id = ?''',
+        '''SELECT task, usertelegram, username, points, isconfirmed, ispenalty 
+           FROM tasksdone WHERE id = ?''',
         (task_id,)
     )
     
@@ -570,20 +561,13 @@ def process_confirmation(update: Update, context):
         query.edit_message_text("✅ Эта запись уже подтверждена!")
         return
     
-    # Проверяем, что не подтверждает свою запись (кроме главного админа)
-    # Матрос (@DILLC7) может подтверждать и свои задачи, и свои штрафы
-    if doer_name == confirmer_name:
-        confirmer_tg = f"@{confirmer.username}" if confirmer.username else confirmer.first_name
-        if confirmer_tg not in ADMINS:
-            query.edit_message_text("❌ Нельзя подтверждать свою запись!")
-            return
-
+    # ✅ УБРАЛИ проверку "нельзя свою" - АДМИН МОЖЕТ ВСЁ!
     
-    # Подтверждаем задачу (confirmed_at = сейчас, date не трогаем)
+    # Подтверждаем задачу (ИСПРАВЛЕННЫЕ названия колонок)
     confirmed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     execute_query(
-        '''UPDATE tasks_done 
-           SET confirmed_by = ?, is_confirmed = 1, confirmed_at = ?
+        '''UPDATE tasksdone 
+           SET confirmedby = ?, isconfirmed = 1, confirmedat = ?
            WHERE id = ?''',
         (confirmer_name, confirmed_at, task_id)
     )
@@ -615,9 +599,9 @@ def cancel_task(update: Update, context):
     data = query.data
     task_id = int(data.replace('cancel_', ''))
     
-    # Просто удаляем запись если она ещё не подтверждена
+    # ИСПРАВЛЕННАЯ таблица/колонка
     result = execute_query(
-        "SELECT is_confirmed FROM tasks_done WHERE id = ?", (task_id,)
+        "SELECT isconfirmed FROM tasksdone WHERE id = ?", (task_id,)
     )
     if not result:
         query.edit_message_text("❌ Задача не найдена")
@@ -628,7 +612,7 @@ def cancel_task(update: Update, context):
         query.edit_message_text("❌ Нельзя отменить уже подтверждённую запись")
         return
     
-    execute_query("DELETE FROM tasks_done WHERE id = ?", (task_id,))
+    execute_query("DELETE FROM tasksdone WHERE id = ?", (task_id,))
     query.edit_message_text("❌ Задача отменена")
 
 # ==================== ГОТОВКА И ПОСУДА ====================
