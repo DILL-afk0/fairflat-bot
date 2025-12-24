@@ -23,7 +23,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
 
-DATABASE = "fairflat_fix.db"
+DATABASE = "/app/data/fairflat_fix.db"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Участники
@@ -53,10 +53,11 @@ TASKS = {
 
 # ==================== БАЗА ДАННЫХ ====================
 def init_db():
-    """Инициализация базы данных"""
+    """Инициализация базы данных (БЕЗ СТИРАНИЯ ДАННЫХ)"""
     conn = sqlite3.connect(DATABASE, check_same_thread=False)
     c = conn.cursor()
     
+    # Создаём таблицы если их нет
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (telegram TEXT PRIMARY KEY,
                   name TEXT,
@@ -81,17 +82,21 @@ def init_db():
                   last_user TEXT,
                   last_date TEXT)''')
     
+    # ✅ ДОБАВЛЯЕМ пользователей только если их нет
     for telegram, name in USERS.items():
         c.execute('''INSERT OR IGNORE INTO users (telegram, name) VALUES (?, ?)''',
                   (telegram, name))
     
+    # ✅ ДОБАВЛЯЕМ задачи в очередь только если их нет
     for task in TASKS.keys():
-        c.execute("INSERT OR IGNORE INTO queue (task, last_user) VALUES (?, ?)",
-                  (task, 'никто'))
+        c.execute('''INSERT OR IGNORE INTO queue (task, last_user, last_date) 
+                     VALUES (?, ?, ?)''',
+                  (task, 'никто', None))
     
     conn.commit()
     conn.close()
-    print("✅ База данных инициализирована")
+    print("✅ База данных инициализирована (данные сохранены)")
+
 
 def get_conn():
     """Получить соединение с БД"""
