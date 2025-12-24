@@ -1280,17 +1280,22 @@ def admin_reset_yes(update: Update, context):
         query.edit_message_text("❌ Нет доступа!")
         return
     
+    # ✅ 1. СБРОС БАЛАНСОВ
     for tg in USERS.keys():
         execute_query("UPDATE users SET balance = 0 WHERE telegram = ?", (tg,))
     
-    execute_query("UPDATE queue SET last_user = '', last_date = NULL")
+    # ✅ 2. ОЧИСТКА ОЧЕРЕДИ
+    execute_query("UPDATE queue SET last_user = 'никто', last_date = NULL")
+    
+    # ✅ 3. УДАЛЕНИЕ ВСЕЙ ИСТОРИИ ЗАДАЧ (!!!)
+    execute_query("DELETE FROM tasks_done")
     
     query.edit_message_text(
         "✅ *СБРОС ВЫПОЛНЕН!*\n\n"
         "• Все балансы = 0\n"
         "• Очередь задач очищена\n"
-        "• История задач сохранена\n\n"
-        "Бот готов к работе! 🎉",
+        "• ВСЯ ИСТОРИЯ ЗАДАЧ УДАЛЕНА\n\n"
+        "Бот готов к новому циклу! 🎉",
         parse_mode='Markdown'
     )
 
