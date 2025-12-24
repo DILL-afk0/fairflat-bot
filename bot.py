@@ -850,9 +850,8 @@ def menu_penalty(update: Update, context):
         "• Не убрал за собой → -1 балл\n"
         "• Не сделал назначенное → -2 балла\n"
         "• Оставил мусор → -1 балл\n\n"
-        "Штраф подтверждается другим участником.\n"
         "👑 *Матрос всегда может подтвердить любой штраф!*\n\n"
-        f"Баланс не должен быть меньше: {MIN_BALANCE} баллов.\n\n"
+        f"Баланс не ниже: {MIN_BALANCE} баллов.\n\n"
         "Выберите нарушение:",
         parse_mode='Markdown',
         reply_markup=reply_markup
@@ -877,36 +876,27 @@ def penalty_type_selected(update: Update, context):
     
     penalty_name, points = penalties[penalty_type]
     
-    # Сохраняем в контексте
     context.user_data['penalty_info'] = {
         'name': penalty_name,
         'points': points
     }
     
-    # Показываем список участников (кроме себя)
     user = query.from_user
     user_tg = f"@{user.username}" if user.username else user.first_name
     
     keyboard = []
     for telegram, name in USERS.items():
         if telegram != user_tg:
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"⚠️ {name}",
-                    callback_data=f'penalty_user_{telegram}'
-                )
-            ])
+            keyboard.append([InlineKeyboardButton(f"⚠️ {name}", callback_data=f'penalty_user_{telegram}')])
     
     keyboard.append([InlineKeyboardButton("🏠 Назад", callback_data='menu_penalty')])
-    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     query.edit_message_text(
         f"⚠️ *Кто нарушил?*\n\n"
         f"Нарушение: {penalty_name}\n"
         f"Штраф: {points} баллов\n\n"
-        f"Баланс не ниже: {MIN_BALANCE} баллов.\n\n"
-        "Выберите участника:",
+        f"Баланс не ниже: {MIN_BALANCE} баллов.",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
@@ -933,50 +923,33 @@ def create_penalty(update: Update, context):
     
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     penalty_id = execute_query(
-        '''INSERT INTO tasksdone 
-           (task, usertelegram, username, points, ispenalty, details, date)
-           VALUES (?, ?, ?, ?, 1, ?, ?)''',
-        (f"Штраф: {penalty_name}", user_tg, user_name, points,
-         f"Назначил: {creator_name}", now_str)
+        "INSERT INTO tasksdone (task, usertelegram, username, points, ispenalty, details, date) VALUES (?, ?, ?, ?, 1, ?, ?)",
+        (f"Штраф: {penalty_name}", user_tg, user_name, points, f"Назначил: {creator_name}", now_str)
     )
-        
+    
     if not penalty_id:
-        query.edit_message_text("❌ Ошибка при создании штрафа")
+        query.edit_message_text("❌ Ошибка создания штрафа")
         return
     
-    # ✅ НОВАЯ ЛОГИКА: админ ВСЕГДА может подтвердить штраф
     keyboard = []
     
-    # 1. КНОПКА АДМИНА (ВСЕГДА ПЕРВАЯ)
-    if is_admin(creator_tg):
-        keyboard.append([
-            InlineKeyboardButton(
-                "✅ 👑 матрос подтверждает штраф",
-                callback_data=f'confirm_{penalty_id}_матрос'
-            )
-        ])
+    # ✅ АДМИН ВСЕГДА ПЕРВЫЙ (исправлено is_admin)
+    if creator_tg.lstrip('@') in ADMINS:
+        keyboard.append([InlineKeyboardButton("✅ 👑 матрос подтверждает штраф", callback_data=f'confirm_{penalty_id}_матрос')])
     
-    # 2. ОСТАЛЬНЫЕ ДОМАШНИЕ (кроме создателя и нарушителя)
+    # Остальные домашние
     possible_confirmers = execute_query(
-        '''SELECT telegram, name FROM users 
-           WHERE telegram != ? AND telegram != ? AND is_home = 1''',
+        "SELECT telegram, name FROM users WHERE telegram != ? AND telegram != ? AND ishome = 1",
         (creator_tg, user_tg)
     )
     
     for conf_tg, conf_name in possible_confirmers:
-        keyboard.append([
-            InlineKeyboardButton(
-                f"✅ {conf_name} подтверждает штраф",
-                callback_data=f'confirm_{penalty_id}_{conf_name}'
-            )
-        ])
+        keyboard.append([InlineKeyboardButton(f"✅ {conf_name} подтверждает штраф", callback_data=f'confirm_{penalty_id}_{conf_name}')])
     
-    # 3. КНОПКА ОТМЕНЫ
     keyboard.append([InlineKeyboardButton("❌ Отменить", callback_data=f'cancel_{penalty_id}')])
-    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    total_confirmers = len(possible_confirmers) + (1 if is_admin(creator_tg) else 0)
+    total_confirmers = len(possible_confirmers) + (1 if creator_tg.lstrip('@') in ADMINS else 0)
     
     query.edit_message_text(
         f"⚠️ *Штраф создан!*\n\n"
@@ -984,8 +957,8 @@ def create_penalty(update: Update, context):
         f"📝 {penalty_name}\n"
         f"⭐ Штраф: {points} баллов\n"
         f"👮 Назначил: {creator_name}\n\n"
-        f"✅ Доступно для подтверждения: *{total_confirmers} чел.*\n"
-        f"Баланс не ниже: {MIN_BALANCE} баллов.",
+        f"✅ Подтвердить: *{total_confirmers} чел.*\n"
+        f"Баланс ≥ {MIN_BALANCE}",
         parse_mode='Markdown',
         reply_markup=reply_markup
     )
