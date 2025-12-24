@@ -539,7 +539,7 @@ def process_confirmation(update: Update, context):
         return
     
     # ✅ АДМИН МОЖЕТ ПОДТВЕРДИТЬ ЛЮБУЮ КНОПКУ (убрали проверку expected_confirmer)
-    if not is_admin(confirmertg) and confirmer_name != expected_confirmer:
+    if confirmertg not in ADMINS and confirmer_name != expected_confirmer:
         query.edit_message_text(f"❌ Подтверждать должен {expected_confirmer}!")
         return
 
@@ -857,7 +857,7 @@ def menu_penalty(update: Update, context):
         "• Не сделал назначенное → -2 балла\n"
         "• Оставил мусор → -1 балл\n\n"
         "Штраф подтверждается другим участником.\n"
-        "Тот, кто назначает штраф, не может его подтвердить!\n\n"
+        "👑 *Матрос всегда может подтвердить любой штраф!*\n\n"
         f"Баланс не должен быть меньше: {MIN_BALANCE} баллов.\n\n"
         "Выберите нарушение:",
         parse_mode='Markdown',
@@ -939,8 +939,8 @@ def create_penalty(update: Update, context):
     
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     penalty_id = execute_query(
-        '''INSERT INTO tasks_done 
-           (task, user_telegram, user_name, points, is_penalty, details, date)
+        '''INSERT INTO tasksdone 
+           (task, usertelegram, username, points, ispenalty, details, date)
            VALUES (?, ?, ?, ?, 1, ?, ?)''',
         (f"Штраф: {penalty_name}", user_tg, user_name, points,
          f"Назначил: {creator_name}", now_str)
@@ -950,15 +950,25 @@ def create_penalty(update: Update, context):
         query.edit_message_text("❌ Ошибка при создании штрафа")
         return
     
-    # Находим кто может подтвердить
+    # ✅ НОВАЯ ЛОГИКА: админ ВСЕГДА может подтвердить штраф
+    keyboard = []
+    
+    # 1. КНОПКА АДМИНА (ВСЕГДА ПЕРВАЯ)
+    if is_admin(creator_tg):
+        keyboard.append([
+            InlineKeyboardButton(
+                "✅ 👑 матрос подтверждает штраф",
+                callback_data=f'confirm_{penalty_id}_матрос'
+            )
+        ])
+    
+    # 2. ОСТАЛЬНЫЕ ДОМАШНИЕ (кроме создателя и нарушителя)
     possible_confirmers = execute_query(
         '''SELECT telegram, name FROM users 
            WHERE telegram != ? AND telegram != ? AND is_home = 1''',
         (creator_tg, user_tg)
     )
     
-    keyboard = []
-    # Добавляем обычных подтверждающих
     for conf_tg, conf_name in possible_confirmers:
         keyboard.append([
             InlineKeyboardButton(
@@ -967,38 +977,12 @@ def create_penalty(update: Update, context):
             )
         ])
     
-    # ДОБАВЛЯЕМ КНОПКУ ДЛЯ АДМИНА @DILLC7 (если он назначил штраф)
-    if is_admin(creator_tg):
-        keyboard.insert(0, [
-            InlineKeyboardButton(
-                "✅ 👑 Я (@DILLC7) подтверждаю сам",
-                callback_data=f'confirm_{penalty_id}_@DILLC7'
-            )
-        ])
-
-    
-    if not possible_confirmers:
-        query.edit_message_text(
-            f"⚠️ *Штраф записан!*\n\n"
-            f"👤 {user_name}\n"
-            f"📝 {penalty_name}\n"
-            f"⭐ Штраф: {points} баллов\n\n"
-            f"Нет других участников для подтверждения штрафа.\n"
-            f"Баланс не ниже: {MIN_BALANCE} баллов.",
-            parse_mode='Markdown'
-        )
-        return
-    
-    keyboard = []
-    for conf_tg, conf_name in possible_confirmers:
-        keyboard.append([
-            InlineKeyboardButton(
-                f"✅ {conf_name} подтверждает штраф",
-                callback_data=f'confirm_{penalty_id}_{conf_name}'
-            )
-        ])
+    # 3. КНОПКА ОТМЕНЫ
+    keyboard.append([InlineKeyboardButton("❌ Отменить", callback_data=f'cancel_{penalty_id}')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    total_confirmers = len(possible_confirmers) + (1 if is_admin(creator_tg) else 0)
     
     query.edit_message_text(
         f"⚠️ *Штраф создан!*\n\n"
@@ -1006,7 +990,7 @@ def create_penalty(update: Update, context):
         f"📝 {penalty_name}\n"
         f"⭐ Штраф: {points} баллов\n"
         f"👮 Назначил: {creator_name}\n\n"
-        f"Подтвердить может другой участник (не тот кто назначил).\n"
+        f"✅ Доступно для подтверждения: *{total_confirmers} чел.*\n"
         f"Баланс не ниже: {MIN_BALANCE} баллов.",
         parse_mode='Markdown',
         reply_markup=reply_markup
